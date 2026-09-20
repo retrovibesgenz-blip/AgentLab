@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <title>AgentLab Chat</title>
+  <link rel="stylesheet" href="theme.css" />
+  <style>
+    html, body {
+      margin: 0; height: 100%;
+      font-family: "Segoe UI", -apple-system, system-ui, sans-serif;
+      color: var(--text); background: transparent; user-select: none;
+      -webkit-font-smoothing: antialiased;
+    }
+    #app {
+      display: flex; flex-direction: column; height: 100vh;
+      background: var(--bg); border: 1px solid var(--line);
+      border-radius: 16px; overflow: hidden; box-shadow: var(--shadow);
+    }
+
+    /* ---- title bar ---- */
+    header {
+      -webkit-app-region: drag;
+      display: flex; align-items: center; gap: 10px;
+      padding: 11px 12px 11px 14px; background: var(--panel);
+      border-bottom: 1px solid var(--line);
+    }
+    header .logo { --orb: 30px; flex: 0 0 auto; }
+    header .titles { flex: 1; line-height: 1.1; }
+    header .titles h1 { margin: 0; font-size: 14px; font-weight: 700; letter-spacing: -0.2px; }
+    header .titles .sub { font-size: 10px; color: var(--muted); display: flex; align-items: center; gap: 5px; margin-top: 2px; }
+    header .titles .sub .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--faint); transition: background .3s; }
+    header.online .titles .sub .dot { background: var(--ink); box-shadow: 0 0 6px var(--ink); }
+    header .tools { -webkit-app-region: no-drag; display: flex; gap: 4px; }
+    .icon-btn {
+      width: 28px; height: 28px; display: grid; place-items: center;
+      border: 1px solid transparent; border-radius: 8px; background: transparent;
+      color: var(--muted); cursor: pointer; font-size: 14px; transition: all .18s var(--ease);
+    }
+    .icon-btn:hover { background: var(--panel-2); color: var(--text); border-color: var(--line); }
+    .icon-btn:active { transform: scale(.9); }
+    .icon-btn.close:hover { background: var(--ink); color: var(--on-ink); }
+
+    /* ---- keys banner ---- */
+    .banner {
+      display: flex; align-items: center; gap: 8px; padding: 9px 12px;
+      background: #7a5900; color: #fff; font-size: 11.5px; line-height: 1.4;
+      border-bottom: 1px solid rgba(0,0,0,.2);
+    }
+    .banner b { font-weight: 700; }
+    .banner .x { margin-left: auto; cursor: pointer; opacity: .8; -webkit-app-region: no-drag; }
+    .banner .x:hover { opacity: 1; }
+
+    /* ---- settings panel ---- */
+    .panel { padding: 12px; border-bottom: 1px solid var(--line); background: var(--panel-2); animation: card-in .22s var(--ease) both; }
+    .panel-h { font-size: 10px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); font-weight: 700; margin-bottom: 8px; }
+    .seg { display: flex; gap: 6px; background: var(--bg); border: 1px solid var(--line-2); border-radius: 10px; padding: 4px; }
+    .seg-btn { flex: 1; padding: 7px; font-size: 11.5px; font-weight: 700; font-family: inherit; border: none; border-radius: 7px; background: transparent; color: var(--muted); cursor: pointer; transition: all .15s var(--ease); }
+    .seg-btn.active { background: var(--ink); color: var(--on-ink); }
+    .panel-note { font-size: 10.5px; color: var(--muted); line-height: 1.5; margin: 9px 0; }
+    .panel-input { width: 100%; background: var(--bg); color: var(--text); border: 1px solid var(--line-2); border-radius: 8px; padding: 7px 9px; font-size: 11px; font-family: "Consolas", monospace; margin-bottom: 8px; }
+    .panel-input:focus { outline: none; border-color: var(--ink); }
+    .btn-load { width: 100%; padding: 8px; font-size: 12px; font-weight: 700; font-family: inherit; border: none; border-radius: 8px; background: var(--ink); color: var(--on-ink); cursor: pointer; transition: transform .12s var(--ease), filter .18s; }
+    .btn-load:hover { filter: brightness(1.12); }
+    :root[data-theme="dark"] .btn-load:hover { filter: brightness(.9); }
+    .btn-load:active { transform: scale(.97); }
+    .btn-load:disabled { opacity: .5; cursor: default; }
+    .panel-status { font-size: 10.5px; color: var(--muted); margin-top: 8px; font-family: "Consolas", monospace; word-break: break-word; }
+    .panel-status.ok { color: var(--ink); font-weight: 700; }
+
+    /* ---- active agents strip ---- */
+    .agents { display: flex; gap: 8px; overflow-x: auto; padding: 10px 12px; border-bottom: 1px solid var(--line); background: var(--bg); }
+    .agents:empty { display: none; }
+    .agents::-webkit-scrollbar { height: 0; }
+    .achip {
+      flex: 0 0 auto; display: flex; align-items: center; gap: 7px;
+      background: var(--panel); border: 1px solid var(--line-2); border-radius: 999px;
+      padding: 4px 8px 4px 5px; animation: pop-in .3s var(--ease) both;
+    }
+    .achip .orb { --orb: 22px; }
+    .achip .nm { font-size: 11px; font-weight: 700; }
+    .achip .st { font-size: 9px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); }
+    .achip.acting .st { color: var(--ink); font-weight: 700; }
+    .achip .mini {
+      width: 18px; height: 18px; border: none; border-radius: 50%;
+      background: var(--panel-2); color: var(--text); cursor: pointer; font-size: 10px; line-height: 1;
+    }
+    .achip .mini:hover { background: var(--ink); color: var(--on-ink); }
+
+    /* ---- chat thread ---- */
+    .chat { flex: 1; overflow-y: auto; padding: 14px 12px 6px; display: flex; flex-direction: column; gap: 10px; }
+    .chat::-webkit-scrollbar { width: 8px; }
+    .chat::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 8px; }
+
+    .welcome { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 14px; margin: auto 0; padding: 20px; }
+    .welcome .orb { --orb: 88px; }
+    .welcome h2 { margin: 0; font-size: 15px; }
+    .welcome p { margin: 0; font-size: 12px; color: var(--muted); max-width: 250px; line-height: 1.5; }
+
+    .msg { display: flex; gap: 8px; max-width: 100%; animation: card-in .28s var(--ease) both; }
+    .msg.user { justify-content: flex-end; }
+    .msg .avatar { --orb: 30px; flex: 0 0 auto; margin-top: 2px; }
+    .msg .body { max-width: 78%; }
+    .msg .who { font-size: 10px; color: var(--muted); font-weight: 700; margin: 0 0 3px 2px; }
+    .bubble {
+      padding: 8px 11px; border-radius: 13px; font-size: 12.5px; line-height: 1.45;
+      border: 1px solid var(--line); background: var(--panel); word-wrap: break-word;
+    }
+    .msg.user .bubble { background: var(--ink); color: var(--on-ink); border-color: var(--ink); border-bottom-right-radius: 4px; }
+    .msg.agent .bubble { border-bottom-left-radius: 4px; }
+    .bubble.think { font-style: italic; color: var(--muted); background: var(--panel-2); }
+    .bubble.say { background: color-mix(in srgb, var(--ink) 10%, var(--panel)); border-color: var(--ink); font-weight: 600; }
+    .bubble.say .ic { margin-right: 4px; }
+    .bubble.action b { font-weight: 700; }
+    .bubble.done { border-color: var(--ink); }
+    .bubble.action .ic, .bubble.done .ic, .bubble.stop .ic { font-style: normal; margin-right: 4px; }
+    .msg.system { justify-content: center; }
+    .msg.system .bubble { background: transparent; border: none; color: var(--faint); font-size: 11px; padding: 2px; }
+
+    .typing { display: inline-flex; gap: 3px; align-items: center; }
+    .typing i { width: 5px; height: 5px; border-radius: 50%; background: var(--muted); animation: blinkdot 1.2s infinite; }
+    .typing i:nth-child(2) { animation-delay: .2s; } .typing i:nth-child(3) { animation-delay: .4s; }
+    @keyframes blinkdot { 0%,60%,100%{opacity:.3} 30%{opacity:1} }
+
+    /* ---- voice bar ---- */
+    .icon-btn.on { background: var(--ink); color: var(--on-ink); border-color: var(--ink); }
+    .voicebar {
+      display: flex; flex-direction: column; align-items: center; gap: 10px;
+      padding: 16px 12px 14px; border-top: 1px solid var(--line);
+      background: var(--panel-2); animation: card-in .25s var(--ease) both;
+    }
+    #blob { width: 160px; height: 160px; }
+    .talk {
+      -webkit-app-region: no-drag; user-select: none;
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 10px 20px; font-size: 13px; font-weight: 700; font-family: inherit;
+      border: 1px solid var(--line-2); border-radius: 999px; cursor: pointer;
+      background: var(--bg); color: var(--text); transition: all .15s var(--ease);
+    }
+    .talk:hover { border-color: var(--ink); }
+    .talk:active { transform: scale(.96); }
+    .talk.rec { background: #ff4646; color: #fff; border-color: #ff4646; animation: recpulse 1s ease-in-out infinite; }
+    @keyframes recpulse { 0%,100%{ box-shadow: 0 0 0 0 rgba(255,70,70,.5);} 50%{ box-shadow: 0 0 0 8px rgba(255,70,70,0);} }
+    .vstatus { font-size: 10.5px; color: var(--muted); text-align: center; min-height: 14px; }
+
+    /* ---- composer ---- */
+    .composer { padding: 10px 12px 12px; border-top: 1px solid var(--line); background: var(--panel); }
+    .composer .box { display: flex; gap: 8px; align-items: flex-end; }
+    .composer textarea {
+      flex: 1; resize: none; height: 40px; max-height: 120px;
+      background: var(--bg); color: var(--text); border: 1px solid var(--line-2);
+      border-radius: 12px; padding: 10px 12px; font-size: 12.5px; font-family: inherit; line-height: 1.3;
+      transition: border-color .18s, box-shadow .18s;
+    }
+    .composer textarea::placeholder { color: var(--faint); }
+    .composer textarea:focus { outline: none; border-color: var(--ink); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ink) 12%, transparent); }
+    .send {
+      flex: 0 0 auto; width: 42px; height: 42px; border: none; border-radius: 12px;
+      background: var(--ink); color: var(--on-ink); cursor: pointer; font-size: 17px;
+      display: grid; place-items: center; transition: transform .12s var(--ease), filter .18s;
+    }
+    .send:hover { filter: brightness(1.12); }
+    :root[data-theme="dark"] .send:hover { filter: brightness(.9); }
+    .send:active { transform: scale(.92); }
+    .composer .hint { display: flex; justify-content: space-between; margin-top: 7px; font-size: 10px; color: var(--faint); }
+    .composer .hint a { color: var(--muted); cursor: pointer; text-decoration: none; -webkit-app-region: no-drag; }
+    .composer .hint a:hover { color: var(--text); }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <header id="hdr">
+      <div class="orb logo"><span class="eye l"></span><span class="eye r"></span></div>
+      <div class="titles">
+        <h1>AgentLab</h1>
+        <div class="sub"><span class="dot"></span><span id="status">connecting…</span></div>
+      </div>
+      <div class="tools">
+        <button class="icon-btn" id="voice" title="Voice mode — talk to the agent">🎙</button>
+        <button class="icon-btn" id="settings" title="Model settings">⚙</button>
+        <button class="icon-btn" id="sound" title="Toggle sound">♪</button>
+        <button class="icon-btn" id="theme" title="Toggle theme">◑</button>
+        <button class="icon-btn" id="maxbtn" title="Maximize / restore">⛶</button>
+        <button class="icon-btn" id="min" title="Minimize">—</button>
+        <button class="icon-btn close" id="close" title="Close">×</button>
+      </div>
+    </header>
+
+    <div class="banner" id="banner" hidden></div>
+
+    <div class="panel" id="panel" hidden>
+      <div class="panel-h">Vision engine</div>
+      <div class="seg">
+        <button class="seg-btn active" id="mode-cloud">☁ Cloud</button>
+        <button class="seg-btn" id="mode-ollama">🦙 Ollama</button>
+        <button class="seg-btn" id="mode-kaggle">⚡ Kaggle</button>
+        <button class="seg-btn" id="mode-local">▣ WebGPU</button>
+      </div>
+      <div id="cloud-info" class="panel-note">
+        Uses the provider in <b>.env</b> (Z.AI / GLM by default). Set a vision
+        model + key there for screen-aware control.
+      </div>
+      <div id="ollama-info" hidden>
+        <div class="panel-note">
+          Runs open models <b>locally via Ollama</b> (install from ollama.com and
+          keep it running). Handles download + optimization for you. Use a
+          <b>vision</b> model. Change the model then reselect Ollama to apply.
+        </div>
+        <input id="ollama-model" class="panel-input" value="llama3.2-vision" spellcheck="false" list="ollama-presets" />
+        <datalist id="ollama-presets">
+          <option value="llama3.2-vision"></option>
+          <option value="qwen2.5vl"></option>
+          <option value="minicpm-v"></option>
+          <option value="moondream"></option>
+          <option value="gemma3:4b"></option>
+        </datalist>
+        <div class="panel-status" id="ollama-status">idle</div>
+      </div>
+      <div id="kaggle-info" hidden>
+        <div class="panel-note">
+          Runs your open vision model on <b>your Kaggle GPU</b>. The app starts
+          the Kaggle notebook, waits for it to load the model, routes requests to
+          it, and stops it when you close the app. Needs <b>KAGGLE_USERNAME</b> +
+          <b>KAGGLE_KEY</b> (or <b>KAGGLE_ENDPOINT_URL</b>) in <b>.env</b>.
+        </div>
+        <div class="panel-status" id="kaggle-status">idle</div>
+      </div>
+      <div id="local-info" hidden>
+        <div class="panel-note">
+          Runs a vision model on <b>your GPU via WebGPU</b> — free, offline, no
+          key. First load downloads the weights (cached after). Bigger models are
+          more accurate but need a stronger GPU.
+        </div>
+        <select id="local-preset" class="panel-input">
+          <option value="onnx-community/SmolVLM-256M-Instruct">SmolVLM 256M — tiny &amp; fast (safe default)</option>
+          <option value="onnx-community/SmolVLM-500M-Instruct">SmolVLM 500M — small, better</option>
+          <option value="onnx-community/Qwen2-VL-2B-Instruct">Qwen2‑VL 2B — great at UIs</option>
+          <option value="onnx-community/gemma-4-E2B-it-ONNX">Gemma 4 (E2B) — newest, recommended</option>
+          <option value="onnx-community/gemma-4-E4B-it-ONNX">Gemma 4 (E4B) — strongest (big GPU)</option>
+          <option value="onnx-community/gemma-3n-E2B-it-ONNX">Gemma 3n (E2B)</option>
+          <option value="__custom__">Custom model id…</option>
+        </select>
+        <input id="local-model" class="panel-input" value="onnx-community/SmolVLM-256M-Instruct" spellcheck="false" />
+        <button class="btn-load" id="load-model">Load model</button>
+        <div class="panel-status" id="local-status">not loaded</div>
+        <div class="panel-note" style="margin-top:6px">
+          Loads from <b>Hugging Face</b>, 4‑bit optimized. The <b>first</b> load
+          downloads the weights (slow, one‑time — then cached in the browser), so
+          start with <b>SmolVLM 256M</b> (smallest/fastest). For faster local use
+          overall, prefer <b>🦙 Ollama</b> — it manages and caches models for you.
+        </div>
+      </div>
+    </div>
+
+    <div class="agents" id="agents"></div>
+
+    <div class="chat" id="chat">
+      <div class="welcome" id="welcome">
+        <div class="orb hero"><span class="eye l"></span><span class="eye r"></span>
+          <span class="mouth"></span><span class="arm"></span></div>
+        <div>
+          <h2>Hey — what should I do?</h2>
+          <p>Describe a task and I'll spawn an agent to do it on your screen. Watch its orb move as it works, and I'll narrate every step here.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="voicebar" id="voicebar" hidden>
+      <canvas id="blob" width="240" height="240"></canvas>
+      <button class="talk" id="talk" title="Hold to talk">🎙 Hold to talk</button>
+      <div class="vstatus" id="vstatus">Voice mode on — hold the button and speak</div>
+    </div>
+
+    <div class="composer">
+      <div class="box">
+        <textarea id="goal" placeholder="Describe a task…  e.g. Open Notepad and type a haiku" rows="1"></textarea>
+        <button class="send" id="send" title="Launch agent (Enter)">➤</button>
+      </div>
+      <div class="hint"><span>Enter to send · Shift+Enter for newline</span><a id="killall">Stop all agents</a></div>
+    </div>
+  </div>
+
+  <script src="sfx.js"></script>
+  <script src="local-vlm.js"></script>
+  <script src="control.js"></script>
+</body>
+</html>

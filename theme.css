@@ -1,0 +1,212 @@
+/* ==========================================================================
+   AgentLab — professional black & white theme + mascot orb
+   Shared by the control panel and the overlay cursors.
+   ========================================================================== */
+
+:root {
+  /* Light "studio white" monochrome (matches the reference mascot on white). */
+  --bg:        #f5f5f6;
+  --panel:     #ffffff;
+  --panel-2:   #fafafa;
+  --line:      #e6e6e8;
+  --line-2:    #d7d7da;
+  --text:      #0a0a0b;
+  --muted:     #6b6b73;
+  --faint:     #9a9aa2;
+  --ink:       #000000;   /* pure-black accent */
+  --on-ink:    #ffffff;
+  --shadow:    0 18px 46px rgba(0, 0, 0, 0.16);
+  --shadow-sm: 0 6px 18px rgba(0, 0, 0, 0.10);
+  --radius:    14px;
+  --ease:      cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+:root[data-theme="dark"] {
+  /* Charcoal monochrome. Orbs get a stronger rim so they stay visible. */
+  --bg:        #0b0b0d;
+  --panel:     #141417;
+  --panel-2:   #17171b;
+  --line:      #26262c;
+  --line-2:    #33333b;
+  --text:      #f4f4f6;
+  --muted:     #9a9aa4;
+  --faint:     #6a6a74;
+  --ink:       #ffffff;
+  --on-ink:    #000000;
+  --shadow:    0 18px 46px rgba(0, 0, 0, 0.55);
+  --shadow-sm: 0 6px 18px rgba(0, 0, 0, 0.45);
+}
+
+* { box-sizing: border-box; }
+
+/* ------------------------------------------------------------------ mascot */
+/* A glossy black sphere with glowing white eyes. Size via --orb. */
+.orb {
+  --orb: 120px;
+  position: relative;
+  display: inline-block;      /* so width/height apply even on <span> */
+  width: var(--orb);
+  height: var(--orb);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 33% 27%,
+      #565656 0%, #262626 26%, #0c0c0c 62%, #000 100%);
+  box-shadow:
+    inset -7px -9px 18px rgba(0, 0, 0, 0.95),
+    inset 7px 8px 16px rgba(255, 255, 255, 0.10),
+    0 calc(var(--orb) * 0.12) calc(var(--orb) * 0.22) rgba(0, 0, 0, 0.35);
+  animation: orb-bob 3.2s var(--ease) infinite;
+  will-change: transform;
+}
+:root[data-theme="dark"] .orb {
+  box-shadow:
+    inset -7px -9px 18px rgba(0, 0, 0, 0.95),
+    inset 7px 8px 16px rgba(255, 255, 255, 0.12),
+    0 0 0 1.5px rgba(255, 255, 255, 0.22),
+    0 calc(var(--orb) * 0.12) calc(var(--orb) * 0.22) rgba(0, 0, 0, 0.6);
+}
+
+/* soft ground shadow */
+.orb::after {
+  content: "";
+  position: absolute;
+  left: 12%;
+  bottom: -14%;
+  width: 76%;
+  height: 16%;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.28);
+  filter: blur(6px);
+  animation: shadow-pulse 3.2s var(--ease) infinite;
+  z-index: -1;
+}
+:root[data-theme="dark"] .orb::after { background: rgba(0, 0, 0, 0.55); }
+
+.orb .eye {
+  position: absolute;
+  top: 42%;
+  width: 15%;
+  height: 21%;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffffff 0%, #eef7ff 45%, #cfe6ff 100%);
+  box-shadow:
+    0 0 8px 2px rgba(255, 255, 255, 0.9),
+    0 0 18px 5px rgba(210, 233, 255, 0.55);
+  animation: blink 4.6s infinite;
+  transform-origin: center;
+}
+.orb .eye.l { left: 27%; }
+.orb .eye.r { right: 27%; }
+
+/* smile + arm only appear on the "hero" variant */
+.orb .mouth {
+  position: absolute;
+  left: 50%;
+  top: 63%;
+  width: 34%;
+  height: 18%;
+  transform: translateX(-50%);
+  border-bottom: 3px solid rgba(255, 255, 255, 0.85);
+  border-radius: 0 0 60% 60%;
+  opacity: 0;
+}
+.orb.hero .mouth { opacity: 1; }
+.orb .arm {
+  position: absolute;
+  right: -14%;
+  top: 30%;
+  width: 26%;
+  height: 6%;
+  background: #0b0b0b;
+  border-radius: 4px;
+  transform-origin: left center;
+  opacity: 0;
+}
+:root[data-theme="dark"] .orb .arm { background: #d8d8d8; }
+.orb.hero .arm { opacity: 1; animation: wave 2.6s ease-in-out infinite; }
+
+/* number badge for distinguishing agents in monochrome */
+.orb .badge {
+  position: absolute;
+  right: -6%;
+  bottom: -6%;
+  min-width: 34%;
+  height: 34%;
+  padding: 0 4px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--on-ink);
+  font: 700 calc(var(--orb) * 0.18) / 1 "Segoe UI", system-ui, sans-serif;
+  border: 2px solid var(--panel);
+  box-shadow: var(--shadow-sm);
+}
+
+/* colour-tinted orb (per-agent cursor / avatar). Set --tint on the element.
+   A vivid glossy marble: white highlight, saturated body, darker rim. */
+.orb.tint {
+  background:
+    radial-gradient(circle at 34% 27%,
+      #ffffff 0%,
+      color-mix(in srgb, var(--tint, #00e5ff) 55%, #ffffff) 14%,
+      var(--tint, #00e5ff) 46%,
+      color-mix(in srgb, var(--tint, #00e5ff) 72%, #000) 82%,
+      color-mix(in srgb, var(--tint, #00e5ff) 50%, #000) 100%);
+  box-shadow:
+    inset -6px -8px 14px rgba(0, 0, 0, 0.45),
+    inset 6px 7px 12px rgba(255, 255, 255, 0.4),
+    0 0 16px 3px color-mix(in srgb, var(--tint, #00e5ff) 75%, transparent),
+    0 calc(var(--orb) * 0.12) calc(var(--orb) * 0.22) rgba(0, 0, 0, 0.4);
+}
+/* dark glossy eyes read clearly on a bright coloured body */
+.orb.tint .eye {
+  background: radial-gradient(circle at 40% 35%, #2a2a2a 0%, #000 70%);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.7);
+}
+.orb.tint .badge {
+  background: #0a0a0a;
+  color: var(--tint, #00e5ff);
+  border-color: rgba(255, 255, 255, 0.9);
+}
+
+/* ------------------------------------------------------------------ motion */
+@keyframes orb-bob {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50%      { transform: translateY(-8%) scale(1.015); }
+}
+@keyframes shadow-pulse {
+  0%, 100% { transform: scaleX(1);   opacity: 0.9; }
+  50%      { transform: scaleX(0.82); opacity: 0.6; }
+}
+@keyframes blink {
+  0%, 92%, 100% { transform: scaleY(1); }
+  95%           { transform: scaleY(0.08); }
+}
+@keyframes wave {
+  0%, 100% { transform: rotate(8deg); }
+  25%      { transform: rotate(-24deg); }
+  50%      { transform: rotate(10deg); }
+  75%      { transform: rotate(-18deg); }
+}
+@keyframes pop-in {
+  0%   { transform: scale(0.4); opacity: 0; }
+  70%  { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); }
+}
+@keyframes poof-out {
+  0%   { transform: scale(1);   opacity: 1; filter: blur(0); }
+  100% { transform: scale(1.5); opacity: 0; filter: blur(6px); }
+}
+@keyframes card-in {
+  0%   { transform: translateY(10px); opacity: 0; }
+  100% { transform: translateY(0);    opacity: 1; }
+}
+@keyframes ping {
+  0%   { transform: scale(0.5); opacity: 0.85; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orb, .orb .eye, .orb::after, .orb .arm { animation: none !important; }
+}

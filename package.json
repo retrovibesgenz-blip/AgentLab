@@ -1,0 +1,19 @@
+{
+  "name": "agentlab",
+  "version": "1.0.0",
+  "description": "Multi-agent computer automation framework with a transparent, always-on-top multi-cursor overlay.",
+  "main": "main.js",
+  "author": "AgentLab",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron .",
+    "engine": "python agent_engine.py",
+    "serve": "node devserver.js"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "concurrently": "^9.0.1",
+    "electron": "^32.1.2"
+  }
+}

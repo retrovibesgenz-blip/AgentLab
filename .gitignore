@@ -1,0 +1,25 @@
+# Secrets
+.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Node / Electron
+node_modules/
+dist/
+out/
+npm-debug.log*
+
+# Kaggle worker — generated at push time, may contain your username/keys
+kaggle_kernel/kernel-metadata.json
+kaggle_kernel/worker_config.json
+agentlab_kernel_*/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
